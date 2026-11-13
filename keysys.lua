@@ -17,7 +17,7 @@ rconsoleprint("\27[38;2;173;216;230m[-] Enter your key: \27[0m")
 
 local key = rconsoleinput()
 
-if key == "Admin" then
+if key == "f" then
     rconsoleprint("\27[38;2;152;251;152m[+] Success!\27[0m\n")
     for i = 1, 12 do
         rconsoleprint("\27[38;2;173;216;230m[+] Loading " .. frames[(i - 1) % 4 + 1] .. "\27[0m\r")
