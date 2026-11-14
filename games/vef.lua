@@ -1,5 +1,5 @@
 local Lighting = game:GetService("Lighting")
-local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
+local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua?t=" .. os.time()))()
 local players = game:GetService("Players")
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
@@ -95,6 +95,9 @@ local function chase()
     HandleCharacter()
 
     RunService.RenderStepped:Connect(function()
+        if not ui.Flags["ball-chase"] then
+            return
+        end
         if not Tool or not Character or not Humanoid or not HumanoidRootPart or not Head then
             return
         end
@@ -186,6 +189,10 @@ local function CreateHitboxExtender(initialSize)
 		if not part or not part:IsA("BasePart") or part.Name == "RefreshReach" then return 0 end
 		if not inWorkspaceNoHumanoid(part) then return 0 end
 
+		if part.Parent and part.Parent.Name == "Balls" then
+			return 5
+		end
+
 		local s = part.Size
 		local maxd = math.max(s.X, s.Y, s.Z)
 		local mind = math.min(s.X, s.Y, s.Z)
@@ -228,7 +235,7 @@ local function CreateHitboxExtender(initialSize)
 		if not hrp then _cachedBall = nil return nil end
 		local best, bestScore, bestDist = nil, -1, math.huge
 		for part in pairs(BallCache) do
-			if part.Parent then
+			if part and part.Parent then
 				local score = ballScore(part)
 				if score > 0 then
 					local d = (part.Position - hrp.Position).Magnitude
@@ -291,7 +298,7 @@ local function CreateHitboxExtender(initialSize)
 	end))
 
 	local reachFTICooldowns = {}
-	local REACH_FTI_COOLDOWN = 0.10
+	local REACH_FTI_COOLDOWN = 0.05
 
 	local function reachFireFTI(limb, ball)
 		if not limb or not limb.Parent or not limb:IsA("BasePart") then return end
@@ -338,6 +345,16 @@ local function CreateHitboxExtender(initialSize)
 		elseif not reachPart.CanTouch then
 			reachPart.CanTouch = true
 		end
+
+		local char = Player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if hrp and (ball.Position - hrp.Position).Magnitude <= (size + 6) then
+			for limb in pairs(reachLimbs) do
+				if limb and limb.Parent and (limb.Position - ball.Position).Magnitude <= size then
+					reachFireFTI(limb, ball)
+				end
+			end
+		end
 	end))
 
 	task.spawn(function()
@@ -373,6 +390,8 @@ local function CreateHitboxExtender(initialSize)
 	return Extender
 end
 
+local bigfoot = CreateHitboxExtender(2.1)
+
 physics:Section("ball", "Left", "general")
 
 ui.toggle({
@@ -380,7 +399,7 @@ ui.toggle({
     Flag="bigfoot",
     Default=false,
     Callback=function(enabled)
-        CreateHitboxExtender(2.1):SetEnabled(enabled)
+        bigfoot:SetEnabled(enabled)
     end
 })
 
@@ -393,7 +412,7 @@ ui.slider({
     Max=10,
     Decimals=2,
     Callback=function(val)
-        CreateHitboxExtender(2.1):SetSize(val)
+        bigfoot:SetSize(val)
     end
 })
 
@@ -404,7 +423,9 @@ ui.toggle({
     Flag="ball-chase",
     Default=false,
     Callback=function(v)
-        chase()
+        if v then
+            chase()
+        end
     end
 })
 
@@ -419,12 +440,12 @@ menubind = ui.label({
     Default=ui.ToggleKey,
     Callback=function(menukey)
         if menukey.EnumType == Enum.KeyCode then
-        task.defer(function()
-            ui.ToggleKey = menukey
-            menubind:Set("menu toggle: " .. ui.ToggleKey.Name)
-        end)
+            task.defer(function()
+                ui.ToggleKey = menukey
+                menubind:Set("menu toggle: " .. ui.ToggleKey.Name)
+            end)
+        end
     end
-end
 })
 
 ui.toggle({
@@ -436,8 +457,8 @@ ui.toggle({
             ui.watermark("tickrate.wip | private")
         else
             ui.watermark(false)
+        end
     end
-end
 })
 
 world:Section("general", "Left", "sky")
@@ -457,10 +478,10 @@ ui.toggle({
     Color=ui.Theme.Accent[1],
     Flag="ambient-picker",
     Callback=function(newColor)
-       if ui.Flags["ambient"] then
-        Lighting.Ambient = newColor
+        if ui.Flags["ambient"] then
+            Lighting.Ambient = newColor
+        end
     end
-end
 })
 
 world:Section("general", "Left", "lighting")
