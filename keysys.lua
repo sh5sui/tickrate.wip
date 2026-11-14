@@ -28,6 +28,7 @@ if key == "f" then
         task.wait(0.15)
     end
     local success, err = pcall(function()
+        rconsoledestroy()
         local src = game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/loader.lua") 
         local func = loadstring(src)
 
