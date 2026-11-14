@@ -25,7 +25,6 @@ if key == "f" then
         rconsoleprint("\27[38;2;233;160;202m[+] Loading " .. frames[(i - 1) % 4 + 1] .. "\27[0m\r")
         task.wait(0.15)
     end
-    rconsoleprint("\n")
     local success, err = pcall(function()
         local src = game:HttpGet("https://raw.githubusercontent.com/sh5sui/subtick.fun/main/loader.lua") 
         local func = loadstring(src)
