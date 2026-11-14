@@ -18,7 +18,7 @@ local function chase()
     local cloneref = cloneref or clonereference or function(Any) return Any end
 
     getgenv().PATH = workspace:FindFirstChild("Balls", true)
-    getgenv().TOOLS = {"Dribble", "Pass", "Tackle"} -- Added "Tackle" here
+    getgenv().TOOLS = {"Dribble", "Pass", "Tackle"}
     getgenv().MAX_DISTANCE = 10
     getgenv().MIN_DISTANCE = 3
     getgenv().OWNERCHECK = false
@@ -107,7 +107,6 @@ local function chase()
 
         if not Path then return end
 
-        -- Dynamically find the nearest ball every frame
         local NearestBall = nil
         local SmallestMagnitude = math.huge
 
@@ -123,7 +122,6 @@ local function chase()
 
         if not NearestBall then return end
 
-        -- Apply distance and state checks to the nearest ball
         if SmallestMagnitude > getgenv().MAX_DISTANCE then return end
         if Humanoid.MoveDirection.Magnitude > 0 then return end
         if SmallestMagnitude < getgenv().MIN_DISTANCE then return end
@@ -145,6 +143,236 @@ local function chase()
     end)
 end
 
+local function CreateHitboxExtender(initialSize)
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	local Player = Players.LocalPlayer
+
+	local Extender = {
+		Enabled = false,
+		Size = initialSize or 2.10,
+		Connections = {},
+		Running = true
+	}
+
+	local function safeConn(c)
+		table.insert(Extender.Connections, c)
+		return c
+	end
+
+	local BallCache = {}
+	local _cachedBall = nil
+	local _lastSeenBall = nil
+	local _lastSeenAt = 0
+	local BALL_PERSIST = 3.0
+	local BALL_SIZES = { 2.5, 1.75, 2 }
+
+	local function isWelded(part)
+		local welded = part:FindFirstChild("Welded")
+		return welded and welded.Value == true
+	end
+
+	local function inWorkspaceNoHumanoid(part)
+		local p = part.Parent
+		while p do
+			if p:IsA("Model") and p:FindFirstChildOfClass("Humanoid") then return false end
+			if p == workspace then return true end
+			p = p.Parent
+		end
+		return false
+	end
+
+	local function ballScore(part)
+		if not part or not part:IsA("BasePart") or part.Name == "RefreshReach" then return 0 end
+		if not inWorkspaceNoHumanoid(part) then return 0 end
+
+		local s = part.Size
+		local maxd = math.max(s.X, s.Y, s.Z)
+		local mind = math.min(s.X, s.Y, s.Z)
+		local roundEnough = maxd > 0 and (maxd - mind) <= maxd * 0.3
+		local saneSize = maxd >= 0.6 and maxd <= 8
+		local exact = false
+		for _, b in ipairs(BALL_SIZES) do
+			if s.X == b and s.Y == b and s.Z == b then exact = true break end
+		end
+		local shaped = part:IsA("Part") and part.Shape == Enum.PartType.Ball
+		local named = part.Name:lower():find("ball") ~= nil
+
+		local score = 0
+		if part.Name == "VEF" or (exact and shaped) then score = 4
+		elseif (shaped and saneSize) or (named and saneSize and roundEnough) then score = 3
+		elseif named and saneSize then score = 2
+		end
+		if score == 0 then return 0 end
+
+		if part.Anchored then score = score - 0.5 end
+		if isWelded(part) then score = score - 0.5 end
+		return score
+	end
+
+	for _, part in pairs(workspace:GetDescendants()) do
+		if ballScore(part) > 0 then BallCache[part] = true end
+	end
+
+	safeConn(workspace.DescendantAdded:Connect(function(part)
+		if ballScore(part) > 0 then BallCache[part] = true end
+	end))
+
+	safeConn(workspace.DescendantRemoving:Connect(function(part)
+		BallCache[part] = nil
+	end))
+
+	local function getNearestBall()
+		local char = Player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if not hrp then _cachedBall = nil return nil end
+		local best, bestScore, bestDist = nil, -1, math.huge
+		for part in pairs(BallCache) do
+			if part.Parent then
+				local score = ballScore(part)
+				if score > 0 then
+					local d = (part.Position - hrp.Position).Magnitude
+					if score > bestScore or (score == bestScore and d < bestDist) then
+						best, bestScore, bestDist = part, score, d
+					end
+				end
+			end
+		end
+		if best then
+			_cachedBall = best
+			_lastSeenBall = best
+			_lastSeenAt = os.clock()
+			return best
+		end
+		if _lastSeenBall and _lastSeenBall.Parent and (os.clock() - _lastSeenAt) < BALL_PERSIST then
+			_cachedBall = _lastSeenBall
+			return _lastSeenBall
+		end
+		_cachedBall = nil
+		return nil
+	end
+
+	local staleReach = workspace:FindFirstChild("RefreshReach")
+	if staleReach then pcall(function() staleReach:Destroy() end) end
+
+	local reachPart = Instance.new("Part")
+	reachPart.Name = "RefreshReach"
+	reachPart.Anchored = true
+	reachPart.CanCollide = false
+	reachPart.CanTouch = true
+	reachPart.CanQuery = false
+	reachPart.Transparency = 1
+	reachPart.Shape = Enum.PartType.Ball
+	reachPart.Material = Enum.Material.SmoothPlastic
+	reachPart.Size = Vector3.new(Extender.Size, Extender.Size, Extender.Size)
+	reachPart.Position = Vector3.new(0, -1000, 0)
+	reachPart.Parent = workspace
+
+	local reachLimbs = {}
+	local function rebuildReachLimbs()
+		reachLimbs = {}
+		local char = Player.Character
+		if not char then return end
+		for _, p in ipairs(char:GetDescendants()) do
+			if p:IsA("BasePart") then reachLimbs[p] = true end
+		end
+	end
+	rebuildReachLimbs()
+
+	safeConn(Player.CharacterAdded:Connect(function(char)
+		task.wait(0.2)
+		rebuildReachLimbs()
+		safeConn(char.DescendantAdded:Connect(function(p)
+			if p:IsA("BasePart") then reachLimbs[p] = true end
+		end))
+		safeConn(char.DescendantRemoving:Connect(function(p)
+			reachLimbs[p] = nil
+		end))
+	end))
+
+	local reachFTICooldowns = {}
+	local REACH_FTI_COOLDOWN = 0.10
+
+	local function reachFireFTI(limb, ball)
+		if not limb or not limb.Parent or not limb:IsA("BasePart") then return end
+		if not ball or not ball.Parent then return end
+		local key = tostring(limb) .. tostring(ball)
+		local now = tick()
+		if reachFTICooldowns[key] and now - reachFTICooldowns[key] < REACH_FTI_COOLDOWN then return end
+		reachFTICooldowns[key] = now
+		if typeof(firetouchinterest) == "function" then
+			pcall(firetouchinterest, limb, ball, 0)
+			pcall(firetouchinterest, limb, ball, 1)
+		end
+	end
+
+	safeConn(reachPart.Touched:Connect(function(other)
+		if not Extender.Enabled then return end
+		if reachLimbs[other] and _cachedBall then
+			reachFireFTI(other, _cachedBall)
+		end
+	end))
+
+	local reachLastBall = nil
+	safeConn(RunService.Heartbeat:Connect(function()
+		if not Extender.Enabled then
+			if reachPart.CanTouch then reachPart.CanTouch = false end
+			reachPart.Position = Vector3.new(0, -1000, 0)
+			reachLastBall = nil
+			return
+		end
+		local ball = getNearestBall()
+		if not ball or not ball.Parent then
+			if reachPart.CanTouch then reachPart.CanTouch = false end
+			reachPart.Position = Vector3.new(0, -1000, 0)
+			reachLastBall = nil
+			return
+		end
+		local size = math.max(1, Extender.Size)
+		reachPart.Size = Vector3.new(size, size, size)
+		reachPart.Position = ball.Position
+		if ball ~= reachLastBall then
+			reachLastBall = ball
+			reachPart.CanTouch = false
+			reachPart.CanTouch = true
+		elseif not reachPart.CanTouch then
+			reachPart.CanTouch = true
+		end
+	end))
+
+	task.spawn(function()
+		while Extender.Running do
+			task.wait(4)
+			local now = tick()
+			for k, t in pairs(reachFTICooldowns) do
+				if now - t > 3 then reachFTICooldowns[k] = nil end
+			end
+		end
+	end)
+
+	function Extender:SetEnabled(state)
+		self.Enabled = state
+	end
+
+	function Extender:SetSize(newSize)
+		self.Size = math.max(1, tonumber(newSize) or 2.10)
+		if reachPart then
+			reachPart.Size = Vector3.new(self.Size, self.Size, self.Size)
+		end
+	end
+
+	function Extender:Destroy()
+		self.Running = false
+		self.Enabled = false
+		for _, c in ipairs(self.Connections) do
+			pcall(function() c:Disconnect() end)
+		end
+		if reachPart then pcall(function() reachPart:Destroy() end) end
+	end
+
+	return Extender
+end
+
 physics:Section("ball", "Left", "general")
 
 physics:Section("local", "Right", "general")
@@ -159,6 +387,28 @@ ui.toggle({
 })
 
 misc:Section("menu", "Left", "general")
+
+ui.toggle({
+    Title="bigfoot",
+    Flag="bigfoot",
+    Default=false,
+    Callback=function(enabled)
+        CreateHitboxExtender(2.1):SetEnabled(enabled)
+    end
+})
+
+ui.slider({
+    Title="bigfoot reach",
+    Flag="bigfoot-reach",
+    Symbol=" studs",
+    Default=2.1,
+    Min=1,
+    Max=10,
+    Decimals=2,
+    Callback=function(val)
+        CreateHitboxExtender(2.1):SetSize(val)
+    end
+})
 
 local menubind
 menubind = ui.label({
