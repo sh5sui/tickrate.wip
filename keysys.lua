@@ -26,7 +26,7 @@ if key == "f" then
         task.wait(0.15)
     end
     local success, err = pcall(function()
-        local src = game:HttpGet("https://raw.githubusercontent.com/sh5sui/subtick.fun/main/loader.lua") 
+        local src = game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/main/loader.lua") 
         local func = loadstring(src)
 
         assert(func, "Failed due to compilation error")
