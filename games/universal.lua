@@ -1,13 +1,13 @@
+local Lighting = game:GetService("Lighting")
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
-ui.watermark("tickrate.wip | private")
 ui.notify("Normal", "welcome to tickrate.wip", 5)
 ui.ToggleKey = Enum.KeyCode.Insert
 
 local config = ui.tab("config", {"general"})
 local player = ui.tab("player", {"local", "team", "enemy"})
-local world = ui.tab("world", {"skybox", "lighting"})
+local world = ui.tab("world", {"sky", "lighting"})
 local misc = ui.tab("misc", {"general"})
 
 player:Section("player esp", "Left", "local")
@@ -121,7 +121,7 @@ ui.toggle({
     end
 })
 
-misc:Section("general", "Left", "general")
+misc:Section("menu", "Left", "general")
 
 local menubind
 menubind = ui.label({
@@ -131,9 +131,75 @@ menubind = ui.label({
     Flag="menu-toggle-bind",
     Default=ui.ToggleKey,
     Callback=function(menukey)
+        if menukey.EnumType == Enum.KeyCode then
         task.defer(function()
             ui.ToggleKey = menukey
-            menubind:Set("menu toggle" .. ui.ToggleKey.Name)
+            menubind:Set("menu toggle: " .. ui.ToggleKey.Name)
         end)
+    end
+end
+})
+
+ui.toggle({
+    Title="watermark",
+    Flag="watermark-toggle",
+    Default=true,
+    Callback=function(enabled)
+        if enabled then
+            ui.watermark("tickrate.wip | private")
+        else
+            ui.watermark(false)
+    end
+end
+})
+
+world:Section("general", "Left", "sky")
+
+ui.toggle({
+    Title="ambient",
+    Flag="ambient",
+    Default=false,
+    Callback=function(enabled)
+        if enabled then
+            Lighting.Ambient = ui.Flags["amibent-picker"] or ui.Theme.Accent[2]
+        else
+            Lighting.Ambient = Lighting.Ambient
+        end
+    end
+}):Colorpicker({
+    Color=ui.Theme.Accent[1],
+    Flag="ambient-picker",
+    Callback=function(newColor)
+       if ui.Flags["ambient"] then
+        Lighting.Ambient = newColor
+    end
+end
+})
+
+world:Section("general", "Left", "lighting")
+
+ui.textbox({
+    Title="time of day",
+    Flag="time-of-day",
+    Default="14",
+    Placeholder="0-24",
+    Callback=function(text, enterPressed)
+        local num = tonumber(text)
+        if num then
+            game:GetService("Lighting").ClockTime = math.clamp(num, 0, 24)
+        end
+    end
+})
+
+ui.textbox({
+    Title="brightness",
+    Flag="brightness",
+    Default="2",
+    Placeholder="2",
+    Callback=function(text, enterPressed)
+        local num = tonumber(text)
+        if num then
+            game:GetService("Lighting").Brightness = math.clamp(num, 0, 100)
+        end
     end
 })

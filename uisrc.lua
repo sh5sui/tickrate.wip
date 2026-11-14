@@ -842,11 +842,17 @@ function ui.Window(title, size)
 	WatermarkLabel.TextXAlignment = Enum.TextXAlignment.Left
 	WatermarkLabel.Parent = WatermarkFrame
 
-	function WindowObj.Watermark(text)
-		WatermarkLabel.Text = text
-		WatermarkFrame.Size = UDim2.new(0, WatermarkLabel.TextBounds.X + 20, 0, 24)
-		WatermarkFrame.Visible = true
-	end
+    WatermarkFrame.Name = "Watermark"
+
+        function WindowObj.Watermark(text)
+            if not text or text == "" or text == false then
+                WatermarkFrame.Visible = false
+                return
+            end
+            WatermarkLabel.Text = tostring(text)
+            WatermarkFrame.Size = UDim2.new(0, WatermarkLabel.TextBounds.X + 20, 0, 24)
+            WatermarkFrame.Visible = true
+        end
 
 	function WindowObj.SendNotification(notifType, text, duration)
 		local notif = Instance.new("Frame")
