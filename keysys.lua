@@ -5,7 +5,7 @@ local player = game:GetService("Players").LocalPlayer
 rconsolecreate()
 rconsolesettitle("tickrate.wip")
 
-if name ~= "Potassium" then
+if name ~= "Potassium" or "Madium" then
 	rconsoleprint("\27[38;2;255;160;160m[-] Executor not supported.\27[0m\n")
 	player:Kick("tickrate.cc: unsupported executor")
 	task.wait(3)
