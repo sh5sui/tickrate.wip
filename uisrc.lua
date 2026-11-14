@@ -41,6 +41,25 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = GuiParent
 
+local function NormalizeOpts(opts)
+	if type(opts) == "string" then
+		return {Title = opts}
+	end
+	opts = opts or {}
+	opts.Title = opts.Title or opts.title or opts.Text or opts.text
+	opts.Flag = opts.Flag or opts.flag
+	if opts.Default == nil then opts.Default = opts.default end
+	opts.Callback = opts.Callback or opts.callback
+	opts.List = opts.List or opts.list
+	opts.Min = opts.Min or opts.min
+	opts.Max = opts.Max or opts.max
+	opts.Symbol = opts.Symbol or opts.symbol
+	opts.Color = opts.Color or opts.color
+	opts.Key = opts.Key or opts.key
+	opts.Placeholder = opts.Placeholder or opts.placeholder
+	return opts
+end
+
 local function GetTickrateLogo()
 	local fileName = "tickrate.wip.png"
 	local rawUrl = "https://raw.githubusercontent.com/sh5sui/tickrate.wip/main/tickrate.wip.png"
@@ -183,8 +202,87 @@ local function CreateSectionInColumn(parentCol, secTitle)
 	HeaderLbl.TextXAlignment = Enum.TextXAlignment.Center
 	HeaderLbl.Parent = SecFrame
 
+	local function AttachRowAddons(TargetObj, RightAddons, baseFlag, onTrigger)
+		function TargetObj:Colorpicker(cpOpts)
+			cpOpts = NormalizeOpts(cpOpts)
+			local cpFlag = cpOpts.Flag or (baseFlag .. "_Color")
+			local colorList = {
+				cpOpts.Color or ui.Theme.Accent[1],
+				Color3.fromRGB(255, 255, 255),
+				ui.Theme.Accent[2],
+				ui.Theme.Accent[3],
+				ui.Theme.Accent[4]
+			}
+			local colorIdx = 1
+			ui.Flags[cpFlag] = colorList[1]
+
+			local Swatch = Instance.new("TextButton")
+			Swatch.Size = UDim2.new(0, 18, 0, 10)
+			Swatch.BackgroundColor3 = colorList[1]
+			Swatch.Text = ""
+			Swatch.Parent = RightAddons
+			ApplyStyle(Swatch, 2, ui.Theme.Border)
+
+			Swatch.MouseButton1Click:Connect(function()
+				colorIdx = (colorIdx % #colorList) + 1
+				local nextCol = colorList[colorIdx]
+				Swatch.BackgroundColor3 = nextCol
+				ui.Flags[cpFlag] = nextCol
+				if cpOpts.Callback then
+					cpOpts.Callback(nextCol)
+				end
+			end)
+			return TargetObj
+		end
+
+		function TargetObj:Keybind(kbOpts)
+			kbOpts = NormalizeOpts(kbOpts)
+			local kbFlag = kbOpts.Flag or (baseFlag .. "_Key")
+			local currentKey = kbOpts.Key or kbOpts.Default or Enum.KeyCode.None
+			ui.Flags[kbFlag] = currentKey
+
+			local GearBtn = Instance.new("TextButton")
+			GearBtn.Size = UDim2.new(0, 16, 0, 16)
+			GearBtn.BackgroundTransparency = 1
+			GearBtn.Text = "⚙"
+			GearBtn.TextColor3 = ui.Theme.TextActive
+			GearBtn.TextSize = 13
+			GearBtn.Font = ui.Theme.FontBold
+			GearBtn.Parent = RightAddons
+
+			local binding = false
+			GearBtn.MouseButton1Click:Connect(function()
+				binding = true
+				GearBtn.Text = "..."
+			end)
+
+			UserInputService.InputBegan:Connect(function(input, gp)
+				if binding then
+					if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Unknown then
+						currentKey = input.KeyCode
+					elseif input.UserInputType == Enum.UserInputType.MouseButton1
+						or input.UserInputType == Enum.UserInputType.MouseButton2 then
+						currentKey = input.UserInputType
+					end
+					ui.Flags[kbFlag] = currentKey
+					GearBtn.Text = "⚙"
+					binding = false
+					if kbOpts.Callback then
+						kbOpts.Callback(currentKey)
+					end
+				elseif not gp and (input.KeyCode == currentKey or input.UserInputType == currentKey) then
+					if onTrigger then
+						onTrigger(currentKey)
+					end
+				end
+			end)
+
+			return TargetObj
+		end
+	end
+
 	function SectionObj:Toggle(opts)
-		opts = opts or {}
+		opts = NormalizeOpts(opts)
 		local flag = opts.Flag or opts.Title or "Toggle"
 		local state = opts.Default or false
 		ui.Flags[flag] = state
@@ -240,85 +338,73 @@ local function CreateSectionInColumn(parentCol, secTitle)
 		Box.MouseButton1Click:Connect(function() SetState(not state) end)
 		Title.MouseButton1Click:Connect(function() SetState(not state) end)
 
-		local ToggleRet = {}
-
-		function ToggleRet:Colorpicker(cpOpts)
-			cpOpts = cpOpts or {}
-			local cpFlag = cpOpts.Flag or (flag .. "_Color")
-			local colorList = {
-				cpOpts.Color or ui.Theme.Accent[1],
-				Color3.fromRGB(255, 255, 255),
-				ui.Theme.Accent[2],
-				ui.Theme.Accent[3],
-				ui.Theme.Accent[4]
-			}
-			local colorIdx = 1
-			ui.Flags[cpFlag] = colorList[1]
-
-			local Swatch = Instance.new("TextButton")
-			Swatch.Size = UDim2.new(0, 18, 0, 10)
-			Swatch.BackgroundColor3 = colorList[1]
-			Swatch.Text = ""
-			Swatch.Parent = RightAddons
-			ApplyStyle(Swatch, 2, ui.Theme.Border)
-
-			Swatch.MouseButton1Click:Connect(function()
-				colorIdx = (colorIdx % #colorList) + 1
-				local nextCol = colorList[colorIdx]
-				Swatch.BackgroundColor3 = nextCol
-				ui.Flags[cpFlag] = nextCol
-				if cpOpts.Callback then
-					cpOpts.Callback(nextCol)
-				end
-			end)
-			return ToggleRet
-		end
-
-		function ToggleRet:Keybind(kbOpts)
-			kbOpts = kbOpts or {}
-			local kbFlag = kbOpts.Flag or (flag .. "_Key")
-			local currentKey = kbOpts.Key or Enum.KeyCode.None
-			ui.Flags[kbFlag] = currentKey
-
-			local GearBtn = Instance.new("TextButton")
-			GearBtn.Size = UDim2.new(0, 16, 0, 16)
-			GearBtn.BackgroundTransparency = 1
-			GearBtn.Text = "⚙"
-			GearBtn.TextColor3 = ui.Theme.TextActive
-			GearBtn.TextSize = 13
-			GearBtn.Font = ui.Theme.FontBold
-			GearBtn.Parent = RightAddons
-
-			local binding = false
-			GearBtn.MouseButton1Click:Connect(function()
-				binding = true
-				GearBtn.Text = "..."
-			end)
-
-			UserInputService.InputBegan:Connect(function(input, gp)
-				if binding then
-					if input.UserInputType == Enum.UserInputType.Keyboard then
-						currentKey = input.KeyCode
-					elseif input.UserInputType == Enum.UserInputType.MouseButton1
-						or input.UserInputType == Enum.UserInputType.MouseButton2 then
-						currentKey = input.UserInputType
-					end
-					ui.Flags[kbFlag] = currentKey
-					GearBtn.Text = "⚙"
-					binding = false
-				elseif not gp and (input.KeyCode == currentKey or input.UserInputType == currentKey) then
-					SetState(not state)
-				end
-			end)
-
-			return ToggleRet
-		end
+		local ToggleRet = {
+			Set = SetState
+		}
+		AttachRowAddons(ToggleRet, RightAddons, flag, function()
+			SetState(not state)
+		end)
 
 		return ToggleRet
 	end
 
+	function SectionObj:Keybind(opts)
+		opts = NormalizeOpts(opts)
+		local kbFlag = opts.Flag or opts.Title or "Keybind"
+		local currentKey = opts.Key or opts.Default or Enum.KeyCode.RightShift
+		ui.Flags[kbFlag] = currentKey
+
+		local Row = Instance.new("Frame")
+		Row.Size = UDim2.new(1, 0, 0, 18)
+		Row.BackgroundTransparency = 1
+		Row.Parent = SecFrame
+
+		local Lbl = Instance.new("TextLabel")
+		Lbl.Size = UDim2.new(1, -60, 1, 0)
+		Lbl.BackgroundTransparency = 1
+		Lbl.Text = opts.Title or "keybind"
+		Lbl.TextColor3 = ui.Theme.TextInactive
+		Lbl.Font = ui.Theme.Font
+		Lbl.TextSize = 13
+		Lbl.TextXAlignment = Enum.TextXAlignment.Left
+		Lbl.Parent = Row
+
+		local KeyBtn = Instance.new("TextButton")
+		KeyBtn.AutomaticSize = Enum.AutomaticSize.X
+		KeyBtn.Size = UDim2.new(0, 24, 0, 16)
+		KeyBtn.Position = UDim2.new(1, 0, 0.5, -8)
+		KeyBtn.AnchorPoint = Vector2.new(1, 0)
+		KeyBtn.BackgroundColor3 = Color3.fromRGB(11, 11, 13)
+		KeyBtn.Text = " " .. currentKey.Name .. " "
+		KeyBtn.TextColor3 = ui.Theme.TextActive
+		KeyBtn.Font = ui.Theme.Font
+		KeyBtn.TextSize = 11
+		KeyBtn.Parent = Row
+		ApplyStyle(KeyBtn, 2, ui.Theme.Border)
+
+		local binding = false
+		KeyBtn.MouseButton1Click:Connect(function()
+			binding = true
+			KeyBtn.Text = " ... "
+		end)
+
+		UserInputService.InputBegan:Connect(function(input, gp)
+			if binding then
+				if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Unknown then
+					currentKey = input.KeyCode
+					ui.Flags[kbFlag] = currentKey
+					KeyBtn.Text = " " .. currentKey.Name .. " "
+					binding = false
+					if opts.Callback then
+						opts.Callback(currentKey)
+					end
+				end
+			end
+		end)
+	end
+
 	function SectionObj:Textbox(opts)
-		opts = opts or {}
+		opts = NormalizeOpts(opts)
 		local flag = opts.Flag or opts.Title or "Textbox"
 		local defaultText = opts.Default or ""
 		ui.Flags[flag] = defaultText
@@ -375,7 +461,7 @@ local function CreateSectionInColumn(parentCol, secTitle)
 	end
 
 	function SectionObj:Colorpicker(opts)
-		opts = opts or {}
+		opts = NormalizeOpts(opts)
 		local cpFlag = opts.Flag or opts.Title or "Colorpicker"
 		local palette = {
 			opts.Color or ui.Theme.Accent[2],
@@ -421,7 +507,7 @@ local function CreateSectionInColumn(parentCol, secTitle)
 	end
 
 	function SectionObj:Dropdown(opts)
-		opts = opts or {}
+		opts = NormalizeOpts(opts)
 		local flag = opts.Flag or opts.Title or "Dropdown"
 		local list = opts.List or {"Option 1"}
 		local idx = table.find(list, opts.Default) or 1
@@ -474,7 +560,7 @@ local function CreateSectionInColumn(parentCol, secTitle)
 	end
 
 	function SectionObj:Slider(opts)
-		opts = opts or {}
+		opts = NormalizeOpts(opts)
 		local flag = opts.Flag or opts.Title or "Slider"
 		local min = opts.Min or 0
 		local max = opts.Max or 100
@@ -555,7 +641,7 @@ local function CreateSectionInColumn(parentCol, secTitle)
 	end
 
 	function SectionObj:Button(opts)
-		opts = opts or {}
+		opts = NormalizeOpts(opts)
 		local Btn = Instance.new("TextButton")
 		Btn.Size = UDim2.new(1, 0, 0, 22)
 		Btn.BackgroundColor3 = ui.Theme.ElementBg
@@ -574,17 +660,51 @@ local function CreateSectionInColumn(parentCol, secTitle)
 	end
 
 	function SectionObj:Label(opts)
-		opts = type(opts) == "string" and {Title = opts} or (opts or {})
+		opts = NormalizeOpts(opts)
+		local baseFlag = opts.Flag or opts.Title or "Label"
+
+		local Row = Instance.new("Frame")
+		Row.Size = UDim2.new(1, 0, 0, 18)
+		Row.BackgroundTransparency = 1
+		Row.Parent = SecFrame
+
 		local Lbl = Instance.new("TextLabel")
-		Lbl.Size = UDim2.new(1, 0, 0, 16)
+		Lbl.Size = UDim2.new(1, -60, 1, 0)
 		Lbl.BackgroundTransparency = 1
 		Lbl.Text = opts.Title or "Label"
-		Lbl.TextColor3 = ui.Theme.TextDim
+		Lbl.TextColor3 = opts.Color or ui.Theme.TextInactive
 		Lbl.Font = ui.Theme.Font
-		Lbl.TextSize = 12
+		Lbl.TextSize = 13
 		Lbl.TextXAlignment = Enum.TextXAlignment.Left
-		Lbl.Parent = SecFrame
+		Lbl.Parent = Row
+
+		local RightAddons = Instance.new("Frame")
+		RightAddons.Size = UDim2.new(0, 60, 1, 0)
+		RightAddons.Position = UDim2.new(1, -60, 0, 0)
+		RightAddons.BackgroundTransparency = 1
+		RightAddons.Parent = Row
+
+		local AddonLayout = Instance.new("UIListLayout")
+		AddonLayout.FillDirection = Enum.FillDirection.Horizontal
+		AddonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+		AddonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+		AddonLayout.Padding = UDim.new(0, 6)
+		AddonLayout.Parent = RightAddons
+
+		local LabelRet = {}
+
+		function LabelRet:Set(newText, newColor)
+			Lbl.Text = tostring(newText)
+			if newColor then
+				Lbl.TextColor3 = newColor
+			end
+		end
+
+		AttachRowAddons(LabelRet, RightAddons, baseFlag)
+
+		return LabelRet
 	end
+	SectionObj.Text = SectionObj.Label
 
 	return SectionObj
 end
@@ -1003,11 +1123,27 @@ end
 
 function ui.section(title, side, subTabName)
 	if not ui.CurrentTab then ui.tab("visuals") end
-	return ui.CurrentTab:Section(title, side, subTabName)
+	local targetTab = ui.CurrentTab
+
+	if subTabName and ui.CurrentWindow then
+		local key = string.lower(subTabName)
+		for _, t in ipairs(ui.CurrentWindow.Tabs) do
+			if t.SubTabMap and t.SubTabMap[key] then
+				targetTab = t
+				break
+			end
+		end
+	end
+
+	return targetTab:Section(title, side, subTabName)
 end
 
 function ui.toggle(opts)
 	return EnsureActiveSection():Toggle(opts)
+end
+
+function ui.keybind(opts)
+	return EnsureActiveSection():Keybind(opts)
 end
 
 function ui.textbox(opts)
@@ -1033,6 +1169,8 @@ end
 function ui.label(opts)
 	return EnsureActiveSection():Label(opts)
 end
+
+ui.text = ui.label
 
 if getgenv then
 	getgenv().Library = ui

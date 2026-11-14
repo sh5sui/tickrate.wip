@@ -3,6 +3,7 @@ local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tic
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
 ui.watermark("tickrate.wip | private")
 ui.notify("Normal", "welcome to tickrate.wip", 5)
+ui.ToggleKey = Enum.KeyCode.Insert
 
 local config = ui.tab("config", {"general"})
 local player = ui.tab("player", {"local", "team", "enemy"})
@@ -117,5 +118,22 @@ ui.toggle({
     Default=false,
     Callback=function(v)
         print("ignore-bots-team", v)
+    end
+})
+
+misc:Section("general", "Left", "general")
+
+local menubind
+menubind = ui.label({
+    Title="menu toggle: " .. ui.ToggleKey.Name
+}):Keybind({
+    Title="menu toggle",
+    Flag="menu-toggle-bind",
+    Default=ui.ToggleKey,
+    Callback=function(menukey)
+        task.defer(function()
+            ui.ToggleKey = menukey
+            menubind:Set("menu toggle" .. ui.ToggleKey.Name)
+        end)
     end
 })
