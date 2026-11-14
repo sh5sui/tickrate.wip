@@ -2,6 +2,30 @@ local Lighting = game:GetService("Lighting")
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
 local players = game:GetService("Players")
 
+local soundservice = game:GetService("SoundService")
+local getAsset = getcustomasset or getsynasset
+
+local mp3 = "i-rot-che.mp3"
+local mp3url = "https://raw.githubusercontent.com/sh5sui/tickrate.wip/main/i-rot-che.mp3"
+
+if isfile and writefile and not isfile(mp3) then
+    pcall(function ()
+            writefile(mp3, game:HttpGet(mp3url))
+    end)
+end
+
+local music = Instance.new("Sound")
+music.Name = "tickrate.cc"
+music.Volume = 1
+music.Looped = false
+music.Parent = soundservice
+
+if getAsset and isfile and isfile(mp3) then
+    music.SoundId = getAsset(mp3)
+end
+
+music:play()
+
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
 ui.watermark("tickrate.wip | private")
 ui.notify("Normal", "welcome to tickrate.wip", 5)

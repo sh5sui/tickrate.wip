@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -144,31 +145,62 @@ NotifLayout.Padding = UDim.new(0, 6)
 NotifLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
 NotifLayout.Parent = NotifHolder
 
-function ui.CreateLoader(title, size)
-	local winSize = size or Vector2.new(240, 90)
-	local loaderFrame = Instance.new("Frame")
-	loaderFrame.Size = UDim2.new(0, winSize.X, 0, winSize.Y)
-	loaderFrame.Position = UDim2.new(0.5, -winSize.X / 2, 0.5, -winSize.Y / 2)
-	loaderFrame.BackgroundColor3 = ui.Theme.Background
-	loaderFrame.Parent = ScreenGui
-	ApplyStyle(loaderFrame, 6, ui.Theme.Border)
+function ui.CreateLoader(duration)
+	local totalTime = duration or 5
+	local fadeTime = 1.2
+	local holdTime = math.max(0.5, totalTime - (fadeTime * 2))
 
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 1, 0)
-	label.BackgroundTransparency = 1
-	label.Text = title or "tickrate.wip"
-	label.TextColor3 = ui.Theme.TextActive
-	label.Font = ui.Theme.FontBold
-	label.TextSize = 15
-	label.Parent = loaderFrame
+	local fileName = "tickrate.wip.full.png"
+	local rawUrl = "https://raw.githubusercontent.com/sh5sui/tickrate.wip/main/tickrate.wip.full.png"
+	local getAsset = getcustomasset or getsynasset
+	local assetId = nil
 
-	task.delay(0.6, function()
-		if loaderFrame and loaderFrame.Parent then
-			loaderFrame:Destroy()
-		end
-	end)
-	return loaderFrame
+	if getAsset then
+		pcall(function()
+			if isfile and not isfile(fileName) then
+				local response = game:HttpGet(rawUrl)
+				if response and #response > 0 and writefile then
+					writefile(fileName, response)
+				end
+			end
+			assetId = getAsset(fileName)
+		end)
+	end
+
+	local IntroImg = Instance.new("ImageLabel")
+	IntroImg.Name = "TickrateIntro"
+	IntroImg.Size = UDim2.new(0, 320, 0, 140)
+	IntroImg.Position = UDim2.new(0.5, 0, 0.5, 15)
+	IntroImg.AnchorPoint = Vector2.new(0.5, 0.5)
+	IntroImg.BackgroundTransparency = 1
+	IntroImg.Image = assetId or ""
+	IntroImg.ImageTransparency = 1
+	IntroImg.ScaleType = Enum.ScaleType.Fit
+	IntroImg.ZIndex = 100
+	IntroImg.Parent = ScreenGui
+
+	local fadeIn = TweenService:Create(
+		IntroImg,
+		TweenInfo.new(fadeTime, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+		{ ImageTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, 0) }
+	)
+	fadeIn:Play()
+	fadeIn.Completed:Wait()
+
+	task.wait(holdTime)
+
+	local fadeOut = TweenService:Create(
+		IntroImg,
+		TweenInfo.new(fadeTime, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+		{ ImageTransparency = 1, Position = UDim2.new(0.5, 0, 0.5, -15) }
+	)
+	fadeOut:Play()
+	fadeOut.Completed:Wait()
+
+	IntroImg:Destroy()
 end
+
+ui.intro = ui.CreateLoader
 
 local function CreateSectionInColumn(parentCol, secTitle)
 	local SectionObj = {}
