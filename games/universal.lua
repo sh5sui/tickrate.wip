@@ -1,5 +1,6 @@
 local Lighting = game:GetService("Lighting")
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
+local players = game:GetService("Players")
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
 ui.watermark("tickrate.wip | private")
