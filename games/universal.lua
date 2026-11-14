@@ -2,6 +2,7 @@ local Lighting = game:GetService("Lighting")
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
+ui.watermark("tickrate.wip | private")
 ui.notify("Normal", "welcome to tickrate.wip", 5)
 ui.ToggleKey = Enum.KeyCode.Insert
 
@@ -161,9 +162,9 @@ ui.toggle({
     Default=false,
     Callback=function(enabled)
         if enabled then
-            Lighting.Ambient = ui.Flags["amibent-picker"] or ui.Theme.Accent[2]
+            Lighting.Ambient = ui.Flags["ambient-picker"] or ui.Theme.Accent[1]
         else
-            Lighting.Ambient = Lighting.Ambient
+            Lighting.Ambient = Color3.fromRGB(255, 255, 255)
         end
     end
 }):Colorpicker({
