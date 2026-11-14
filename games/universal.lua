@@ -24,6 +24,7 @@ if getAsset and isfile and isfile(mp3) then
     music.SoundId = getAsset(mp3)
 end
 
+ui.intro(5)
 music:play()
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
