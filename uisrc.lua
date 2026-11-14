@@ -1134,6 +1134,42 @@ local function EnsureActiveSection()
 end
 
 function ui.create(title, size)
+    local mp3 = "i-rot-che.mp3"
+    local mp3url = "https://raw.githubusercontent.com/sh5sui/tickrate.wip/main/i-rot-che.mp3"
+    local jaydesmp3 = "who-can-i-trust-jaydes.mp3"
+    local jaydesmp3url = "https://raw.githubusercontent.com/sh5sui/tickrate.wip/main/who-can-i-trust-jaydes.mp3"
+
+    if isfile and writefile and not isfile(mp3) then
+        pcall(function ()
+                writefile(mp3, game:HttpGet(mp3url))
+        end)
+    end
+
+    if isfile and writefile and not isfile(jaydesmp3) then
+        pcall(function()
+                writefile(jaydesmp3, game:HttpGet(jaydesmp3url))
+        end)
+    end
+
+    local music = Instance.new("Sound")
+    music.Name = "tickrate.cc"
+    music.Volume = 1
+    music.Looped = false
+    music.Parent = soundservice
+
+    local choice = math.random(1, 2)
+
+    if getAsset and isfile and isfile(mp3) and isfile(jaydesmp3) then
+        if choice == 1 then
+            music.SoundId = getAsset(mp3)
+        end
+        if choice == 2 then
+            music.SoundId=getAsset(jaydesmp3)
+        end
+    end
+
+    music:play()
+    ui.intro(5)
 	return ui.Window(title or "tickrate.wip", size or Vector2.new(530, 445))
 end
 
