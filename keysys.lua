@@ -6,11 +6,11 @@ rconsolecreate()
 rconsolesettitle("tickrate.wip")
 
 if name ~= "Potassium" then
-    rconsoleprint("\27[38;2;255;160;160m[-] Executor not supported.\27[0m\n")
-    player.Kick("tickrate.cc: unsupported executor")
-    task.wait(3)
-    rconsoledestroy()
-    return
+	rconsoleprint("\27[38;2;255;160;160m[-] Executor not supported.\27[0m\n")
+	player:Kick("tickrate.cc: unsupported executor")
+	task.wait(3)
+	rconsoledestroy()
+	return
 end
 
 rconsoleclear()
@@ -22,28 +22,28 @@ rconsoleprint("\27[38;2;233;160;202m[?] Enter key: \27[0m")
 local key = rconsoleinput()
 
 if key == "f" then
-    rconsoleprint("\27[38;2;233;160;202m[+] Authenticated.\27[0m\n")
-    for i = 1, 12 do
-        rconsoleprint("\27[38;2;233;160;202m[+] Loading " .. frames[(i - 1) % 4 + 1] .. "\27[0m\r")
-        task.wait(0.15)
-    end
-    local success, err = pcall(function()
-        rconsoledestroy()
-        local src = game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/loader.lua") 
-        local func = loadstring(src)
+	rconsoleprint("\27[38;2;233;160;202m[+] Authenticated.\27[0m\n")
+	for i = 1, 12 do
+		rconsoleprint("\27[38;2;233;160;202m[+] Loading " .. frames[(i - 1) % 4 + 1] .. "\27[0m\r")
+		task.wait(0.15)
+	end
+	local success, err = pcall(function()
+		rconsoledestroy()
+		local src = game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/loader.lua?t=" .. os.time())
+		local func = loadstring(src)
 
-        assert(func, "Failed due to compilation error")
-        func()
-    end)
-    if not success then
-        rconsoleprint("\27[38;2;217;142;187m[-] Loader error: " .. tostring(err) .. "\27[0m\n")
-        task.wait(3)
-    end
-    rconsoledestroy()
-    return
+		assert(func, "Failed due to compilation error")
+		func()
+	end)
+	if not success then
+		rconsoleprint("\27[38;2;217;142;187m[-] Loader error: " .. tostring(err) .. "\27[0m\n")
+		task.wait(3)
+	end
+	rconsoledestroy()
+	return
 else
-    rconsoleprint("\27[38;2;217;142;187m[-] Incorrect key.\27[0m\n")
-    task.wait(3)
-    rconsoledestroy()
-    return
+	rconsoleprint("\27[38;2;217;142;187m[-] Incorrect key.\27[0m\n")
+	task.wait(3)
+	rconsoledestroy()
+	return
 end
