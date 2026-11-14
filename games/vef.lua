@@ -375,19 +375,6 @@ end
 
 physics:Section("ball", "Left", "general")
 
-physics:Section("local", "Right", "general")
-
-ui.toggle({
-    Title="auto-ball chase",
-    Flag="ball-chase",
-    Default=false,
-    Callback=function(v)
-        chase()
-    end
-})
-
-misc:Section("menu", "Left", "general")
-
 ui.toggle({
     Title="bigfoot",
     Flag="bigfoot",
@@ -409,6 +396,19 @@ ui.slider({
         CreateHitboxExtender(2.1):SetSize(val)
     end
 })
+
+physics:Section("local", "Right", "general")
+
+ui.toggle({
+    Title="auto-ball chase",
+    Flag="ball-chase",
+    Default=false,
+    Callback=function(v)
+        chase()
+    end
+})
+
+misc:Section("menu", "Left", "general")
 
 local menubind
 menubind = ui.label({
