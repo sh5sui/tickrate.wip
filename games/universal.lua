@@ -1,11 +1,85 @@
 local Lighting = game:GetService("Lighting")
+local lplr = game.Players.LocalPlayer
 local Players = game:GetService("Players")
+local camera = game:GetService("Workspace").CurrentCamera
+local CurrentCamera = workspace.CurrentCamera
+local worldToViewPortPoint = CurrentCamera.WorldToViewportPoint
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
-local locplayer = Players.LocalPlayer
-local camera = workspace.CurrentCamera
 local RunService = game:GetService("RunService")
 local HeadOff = Vector3.new(0, 0.5, 0)
 local LegOff = Vector3.new(0, 3, 0)
+
+function drawTracers(enabled)
+
+    if not enabled then
+        return
+    end
+
+    for i,v in pairs(Players:GetPlayers()) do
+        local trac = Drawing.new("Line")
+        trac.Visible = false
+        trac.Color = ui.Flags["tracers-color-enemy"] or Color3.fromRGB(255, 255, 255)
+        trac.Thickness = 1
+        trac.Transparency = 1
+
+        function lineEsp()
+            game:GetService("RunService").RenderStepped:Connect(function()
+                if v.Character ~= nil and v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("HumanoidRootPart") ~= nil and v ~= lplr and v.Character.Humanoid.Health >= 0 then
+                    local vec, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+
+                    if onScreen then
+                        trac.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 1)
+                        trac.To = Vector2.new(vec.x, vec.y)
+
+                        if v.TeamColor == lplr.TeamColor then
+                            trac.Visible = false
+                        else
+                            trac.Visible = true
+                            trac.Color = ui.Flags["tracers-color-enemy"] or Color3.fromRGB(255, 255, 255)
+                        end
+                    else
+                        trac.Visible = false
+                    end
+                else
+                    trac.Visible = false
+                end
+            end)
+        end
+        coroutine.wrap(lineEsp)()
+    end
+
+    game.Players.PlayerAdded:Connect(function(v)
+        local trac = Drawing.new("Line")
+            trac.Visible = false
+            trac.Color = Color3.fromRGB(255, 255, 255)
+            trac.Thickness = 1
+            trac.Transparency = 1
+
+            function lineEsp()
+                game:GetService("RunService").RenderStepped:Connect(function()
+                    if v.Character ~= nil and v.Character:FindFirstChild("Humanoid") ~= nil and v.Character:FindFirstChild("HumanoidRootPart") ~= nil and v ~= lplr and v.Character.Humanoid.Health >= 0 then
+                        local vec, onScreen = camera:WorldToViewportPoint(v.Character.HumanoidRootPart.Position)
+
+                        if onScreen then
+                            trac.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y / 1)
+                            trac.To = Vector2.new(vec.x, vec.y)
+
+                            if v.TeamColor == lplr.TeamColor then
+                                trac.Visible = false
+                            else
+                                trac.Visible = true
+                            end
+                        else
+                            trac.Visible = false
+                        end
+                    else
+                        trac.Visible = false
+                    end
+                end)
+            end
+            coroutine.wrap(lineEsp)()
+    end)
+end
 
 local boxConnections = {}
 local boxDrawings = {}
@@ -19,7 +93,7 @@ local started = false
 
 local function nameEsp(v)
 
-    if v == Players.LocalPlayer or nameDrawings[v] ~= nil then
+    if v == lplr or nameDrawings[v] ~= nil then
         return
     end
 
@@ -54,11 +128,12 @@ local function nameEsp(v)
 
     nameLabel.Position = Vector2.new(plrpos.X, plrpos.Y - 30)
     
-    if v.TeamColor == locplayer.TeamColor then
+    if v.TeamColor == lplr.TeamColor then
     nameLabel.Visible = false
     return
 else
     nameLabel.Visible = true
+    nameLabel.Color = ui.Flags["name-color-enemy"] or Color3.fromRGB(255, 255, 255)
 end
     end)
 end
@@ -127,7 +202,7 @@ else
 end
 
 local function createBoxESP(v)
-    if v == locplayer or boxDrawings[v] then
+    if v == lplr or boxDrawings[v] then
         return
     end
 
@@ -183,7 +258,7 @@ local function createBoxESP(v)
             Box.Visible = true
             BoxOutline.Visible = true
 
-            if v.TeamColor == locplayer.TeamColor then
+            if v.TeamColor == lplr.TeamColor then
                 Box.Visible = false
                 BoxOutline.Visible = false
                 return
@@ -240,9 +315,9 @@ ui.watermark("tickrate.wip | private")
 ui.notify("Normal", "welcome to tickrate.wip", 5)
 ui.ToggleKey = Enum.KeyCode.Insert
 
-local lname = locplayer.Name
-local lid = locplayer.UserId
-local ldisplay = locplayer.DisplayName
+local lname = lplr.Name
+local lid = lplr.UserId
+local ldisplay = lplr.DisplayName
 
 local config = ui.tab("config", {"general"})
 local player = ui.tab("player", {"local", "team", "enemy"})
@@ -308,7 +383,7 @@ ui.toggle({
             ldraw.Visible = true
 
             nameConnection = RunService.RenderStepped:Connect(function()
-                local character = locplayer.Character
+                local character = lplr.Character
                 local head = character and character:FindFirstChild("Head")
 
                 if not head then
@@ -418,7 +493,7 @@ ui.toggle({
             tdraw.Visible = true
 
             nameConnection = RunService.RenderStepped:Connect(function()
-                local character = locplayer.Character
+                local character = lplr.Character
                 local head = character and character:FindFirstChild("Head")
 
                 if not head then
@@ -519,6 +594,18 @@ ui.toggle({
             drawings.Box.Color = newColor
         end
     end
+})
+
+ui.toggle({
+    Title="tracers",
+    Flag="tracers-enabled-enemy",
+    Default=false,
+    Callback=function(value)
+        drawTracers(value)
+    end
+}):Colorpicker({
+    Color=ui.Theme.Accent[1],
+    Flag="tracers-color-enemy"
 })
 
 ui.dropdown({
