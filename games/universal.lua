@@ -453,8 +453,8 @@ ui.toggle({
     Title="box",
     Flag="boxes-enabled-team",
     Default=false,
-    Callback=function (v)
-        print("boxes-enabled-team", v)
+    Callback=function (value)
+        drawboxesp(value)
     end
 }):Colorpicker({
     Color=ui.Theme.Accent[1],
