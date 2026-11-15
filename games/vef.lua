@@ -1,6 +1,7 @@
 local Lighting = game:GetService("Lighting")
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua?t=" .. os.time()))()
 local players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
 ui.watermark("tickrate.wip | private")
@@ -511,3 +512,57 @@ ui.textbox({
         end
     end
 })
+
+player:Section("velocity", "Left", "local")
+
+local EXTRA_VELOCITY = 2
+local VelocityConnection
+
+local BLOCKED_STATES = {
+    [Enum.HumanoidStateType.Dead] = true,
+    [Enum.HumanoidStateType.Seated] = true,
+    [Enum.HumanoidStateType.Physics] = true,
+}
+
+ui.textbox({
+    Title = "velocity",
+    Flag = "velocity",
+    Default = "2",
+    Placeholder = "2",
+
+    Callback = function(text)
+        local value = tonumber(text)
+
+        if value then
+            EXTRA_VELOCITY = math.clamp(value, 0, 100)
+        end
+    end
+})
+
+VelocityConnection = RunService.PostSimulation:Connect(function(dt)
+    local Character = players.LocalPlayer.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local HRP = Character and Character:FindFirstChild("HumanoidRootPart")
+
+    if not Humanoid or not HRP then
+        return
+    end
+
+    if BLOCKED_STATES[Humanoid:GetState()] then
+        return
+    end
+
+    local MoveDirection = Humanoid.MoveDirection
+    local HorizontalDirection = Vector3.new(
+        MoveDirection.X,
+        0,
+        MoveDirection.Z
+    )
+
+    if HorizontalDirection.Magnitude < 0.01 then
+        return
+    end
+
+    local Offset = HorizontalDirection.Unit * EXTRA_VELOCITY * dt
+    HRP.CFrame = HRP.CFrame + Offset
+end)
