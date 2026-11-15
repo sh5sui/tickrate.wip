@@ -53,7 +53,13 @@ local function nameEsp(v)
         end
 
     nameLabel.Position = Vector2.new(plrpos.X, plrpos.Y - 30)
+    
+    if v.TeamColor == locplayer.TeamColor then
+    nameLabel.Visible = false
+    return
+else
     nameLabel.Visible = true
+end
     end)
 end
 
@@ -176,6 +182,13 @@ local function createBoxESP(v)
 
             Box.Visible = true
             BoxOutline.Visible = true
+
+            if v.TeamColor == locplayer.TeamColor then
+                Box.Visible = false
+                BoxOutline.Visible = false
+                return
+            end
+
         else
             Box.Visible = false
             BoxOutline.Visible = false
