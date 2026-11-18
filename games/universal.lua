@@ -51,7 +51,7 @@ function drawTracers(enabled)
     game.Players.PlayerAdded:Connect(function(v)
         local trac = Drawing.new("Line")
             trac.Visible = false
-            trac.Color = Color3.fromRGB(255, 255, 255)
+            trac.Color = ui.Flags["tracers-color-enemy"] or Color3.fromRGB(255, 255, 255)
             trac.Thickness = 1
             trac.Transparency = 1
 
