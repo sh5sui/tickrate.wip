@@ -437,6 +437,67 @@ local function CreateSectionInColumn(parentCol, secTitle)
 		end)
 	end
 
+	function SectionObj:Bind(opts)
+		opts = NormalizeOpts(opts)
+		local flag = opts.Flag or opts.Title or "Bind"
+		local currentKey = opts.Key or opts.Default or Enum.KeyCode.None
+		ui.Flags[flag] = currentKey
+
+		local Row = Instance.new("Frame")
+		Row.Size = UDim2.new(1, 0, 0, 18)
+		Row.BackgroundTransparency = 1
+		Row.Parent = SecFrame
+
+		local Lbl = Instance.new("TextLabel")
+		Lbl.Size = UDim2.new(1, -60, 1, 0)
+		Lbl.BackgroundTransparency = 1
+		Lbl.Text = opts.Title or "bind"
+		Lbl.TextColor3 = ui.Theme.TextInactive
+		Lbl.Font = ui.Theme.Font
+		Lbl.TextSize = 13
+		Lbl.TextXAlignment = Enum.TextXAlignment.Left
+		Lbl.Parent = Row
+
+		local KeyBtn = Instance.new("TextButton")
+		KeyBtn.AutomaticSize = Enum.AutomaticSize.X
+		KeyBtn.Size = UDim2.new(0, 24, 0, 16)
+		KeyBtn.Position = UDim2.new(1, 0, 0.5, -8)
+		KeyBtn.AnchorPoint = Vector2.new(1, 0)
+		KeyBtn.BackgroundColor3 = Color3.fromRGB(11, 11, 13)
+		KeyBtn.Text = " " .. currentKey.Name .. " "
+		KeyBtn.TextColor3 = ui.Theme.TextActive
+		KeyBtn.Font = ui.Theme.Font
+		KeyBtn.TextSize = 11
+		KeyBtn.Parent = Row
+		ApplyStyle(KeyBtn, 2, ui.Theme.Border)
+
+		local binding = false
+		KeyBtn.MouseButton1Click:Connect(function()
+			binding = true
+			KeyBtn.Text = " ... "
+		end)
+
+		UserInputService.InputBegan:Connect(function(input, gp)
+			if binding then
+				if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode ~= Enum.KeyCode.Unknown then
+					currentKey = input.KeyCode
+					ui.Flags[flag] = currentKey
+					KeyBtn.Text = " " .. currentKey.Name .. " "
+					binding = false
+				elseif input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.MouseButton2 then
+					currentKey = input.UserInputType
+					ui.Flags[flag] = currentKey
+					KeyBtn.Text = " " .. currentKey.Name .. " "
+					binding = false
+				end
+			elseif not gp and (input.KeyCode == currentKey or input.UserInputType == currentKey) then
+				if opts.Callback then
+					opts.Callback(currentKey)
+				end
+			end
+		end)
+	end
+
 	function SectionObj:Textbox(opts)
 		opts = NormalizeOpts(opts)
 		local flag = opts.Flag or opts.Title or "Textbox"
@@ -1220,6 +1281,10 @@ end
 
 function ui.keybind(opts)
 	return EnsureActiveSection():Keybind(opts)
+end
+
+function ui.bind(opts)
+	return EnsureActiveSection():Bind(opts)
 end
 
 function ui.textbox(opts)
