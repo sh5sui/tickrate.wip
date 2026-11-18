@@ -115,6 +115,16 @@ local function doublebtb()
 
 end
 
+scoring:Section("general", "Left", "scoring")
+
+ui.toggle({
+    Title="auto time",
+    Flag="auto-time-toggle",
+    Default=false,
+    Callback=function()
+    end
+})
+
 physics:Section("enhancers", "Left", "player")
 
 ui.slider({

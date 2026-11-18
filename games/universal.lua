@@ -744,3 +744,54 @@ ui.textbox({
         end
     end
 })
+
+config:Section("config", "Left", "general")
+
+ui.textbox({
+    Title="config name",
+    Flag="config-textbox",
+    Default="default",
+    Placeholder="default",
+    Callback=function()
+    end
+})
+
+ui.dropdown({
+    Title="configs",
+    List={""},
+    Default="configs-dropdown",
+    Callback=function()
+    end
+})
+
+ui.button({
+    Title="save",
+    Flag="save-button",
+    Callback=function()
+        ui.notify("Normal", "saved config: " .. ui.Flags["config-textbox"], 3)
+    end
+})
+
+ui.button({
+    Title="override",
+    Flag="override-button",
+    Callback=function()
+        ui.notify("Normal", "config overridden: " .. ui.Flags["config-textbox"], 3)
+    end
+})
+
+ui.button({
+    Title="load",
+    Flag="load-button",
+    Callback=function()
+        ui.notify("Normal", "loaded config: " .. ui.Flags["config-textbox"], 3)
+    end
+})
+
+ui.button({
+    Title="set autoload",
+    Flag="autoload-button",
+    Callback=function()
+        ui.notify("Normal", "set " .. ui.Flags["config-textbox"] .. " as autoload", 3)
+    end
+})
