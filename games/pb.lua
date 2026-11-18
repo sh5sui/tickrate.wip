@@ -26,10 +26,10 @@ physics:Section("enhancers", "Left", "player")
 physics:Section("dribble macros", "Left", "macros")
 
 ui.bind({
-    Title = "snatchback",
-    Flag = "snatchback-macro-bind",
-    Default = Enum.KeyCode.None,
-    Callback = function()
+    Title="snatchback",
+    Flag="snatchback-macro-bind",
+    Default=Enum.KeyCode.None,
+    Callback=function()
         snatchback()
     end
 })

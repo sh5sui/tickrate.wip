@@ -437,7 +437,7 @@ local function CreateSectionInColumn(parentCol, secTitle)
 		end)
 	end
 
-	function SectionObj:Bind(opts)
+function SectionObj:Bind(opts)
 		opts = NormalizeOpts(opts)
 		local flag = opts.Flag or opts.Title or "Bind"
 		local currentKey = opts.Key or opts.Default or Enum.KeyCode.None
@@ -490,9 +490,13 @@ local function CreateSectionInColumn(parentCol, secTitle)
 					KeyBtn.Text = " " .. currentKey.Name .. " "
 					binding = false
 				end
-			elseif not gp and (input.KeyCode == currentKey or input.UserInputType == currentKey) then
-				if opts.Callback then
-					opts.Callback(currentKey)
+			elseif not gp then
+				-- Check against ui.Flags[flag] so dynamic rebinds work instantly
+				local boundKey = ui.Flags[flag]
+				if (input.KeyCode == boundKey or input.UserInputType == boundKey) then
+					if opts.Callback then
+						opts.Callback(boundKey)
+					end
 				end
 			end
 		end)
