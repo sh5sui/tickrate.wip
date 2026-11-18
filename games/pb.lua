@@ -120,7 +120,7 @@ physics:Section("enhancers", "Left", "player")
 ui.slider({
     Title="dribble enhancer",
     Flag="dribble-enhancer-slider",
-    Symbol="x",
+    Symbol="",
     Default=1,
     Min=1,
     Max=10,
@@ -132,7 +132,7 @@ ui.slider({
 ui.slider({
     Title="shot glide",
     Flag="shot-glide-slider",
-    Symbol="x",
+    Symbol="",
     Default=1,
     Min=1,
     Max=10,
@@ -144,7 +144,7 @@ ui.slider({
 ui.slider({
     Title="side step glide",
     Flag="side-step-glide-slider",
-    Symbol="x",
+    Symbol="",
     Default=1,
     Min=1,
     Max=10,
