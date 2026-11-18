@@ -30,7 +30,7 @@ ui.bind({
     Flag = "snatchback-macro-bind",
     Default = Enum.KeyCode.None,
     Callback = function()
-        
+        snatchback()
     end
 })
 
