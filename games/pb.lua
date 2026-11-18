@@ -117,6 +117,42 @@ end
 
 physics:Section("enhancers", "Left", "player")
 
+ui.slider({
+    Title="dribble enhancer",
+    Flag="dribble-enhancer-slider",
+    Symbol="x",
+    Default=1,
+    Min=1,
+    Max=10,
+    Decimals=1,
+    Callback=function()
+    end
+})
+
+ui.slider({
+    Title="shot glide",
+    Flag="shot-glide-slider",
+    Symbol="x",
+    Default=1,
+    Min=1,
+    Max=10,
+    Decimals=1,
+    Callback=function()
+    end
+})
+
+ui.slider({
+    Title="side step glide",
+    Flag="side-step-glide-slider",
+    Symbol="x",
+    Default=1,
+    Min=1,
+    Max=10,
+    Decimals=1,
+    Callback=function()
+    end
+})
+
 physics:Section("dribble macros", "Left", "macros")
 
 ui.toggle({
