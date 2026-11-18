@@ -1,5 +1,5 @@
 local ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/sh5sui/tickrate.wip/refs/heads/main/uisrc.lua"))()
-local inputservice = game:GetService("UserInputService")
+local inputserv = game:GetService("UserInputService")
 local vinputmgr = game:GetService("VirtualInputManager")
 
 local window = ui.create("tickrate.wip", Vector2.new(530, 445))
@@ -13,17 +13,75 @@ local physics = ui.tab("physics", {"player", "macros"})
 local misc = ui.tab("misc", {"general"})
 
 local function snatchback()
-    vinputmgr:SendKeyEvent(true, Enum.KeyCode.X, false, game)
-    task.wait(0.1)
-    vinputmgr:SendKeyEvent(true, Enum.KeyCode.X, false, game)
-    vinputmgr:SendKeyEvent(true, Enum.KeyCode.X, false, game)
-    task.wait(0.1)
-    vinputmgr:SendKeyEvent(true, Enum.KeyCode.X, false, game)
+    if ui.Flags["sprint-dribbles-toggle"] then
+        keypress(0xA0)
+        task.wait(0.05)
+        keypress(0x58)
+        task.wait(0.05)
+        keyrelease(0x58)
+        task.wait(0.05)
+        keypress(0x58)
+        task.wait(0.05)
+        keyrelease(0x58)
+        task.wait(0.05)
+        keyrelease(0xA0)
+else
+    keypress(0x58)
+    task.wait(0.05)
+    keyrelease(0x58)
+    task.wait(0.05)
+    keypress(0x58)
+    task.wait(0.05)
+    keyrelease(0x58)
+end
+end
+
+local function spin()
+    if ui.Flags["sprint-dribbles-toggle"] then
+        keypress(0xA0)
+        task.wait(0.05)
+        keypress(0x5A)
+        task.wait(0.05)
+        keyrelease(0x5A)
+        task.wait(0.05)
+        keypress(0x58)
+        task.wait(0.05)
+        keyrelease(0x58)
+        task.wait(0.05)
+        keypress(0x43)
+        task.wait(0.05)
+        keyrelease(0x43)
+        task.wait(0.05)
+        keyrelease(0xA0)
+else
+    keypress(0x5A)
+    task.wait(0.05)
+    keyrelease(0x5A)
+    task.wait(0.05)
+    keypress(0x58)
+    task.wait(0.05)
+    keyrelease(0x58)
+    task.wait(0.05)
+    keypress(0x43)
+    task.wait(0.05)
+    keyrelease(0x43)
+end
+
+local function doublebtb()
+
 end
 
 physics:Section("enhancers", "Left", "player")
 
 physics:Section("dribble macros", "Left", "macros")
+
+ui.toggle({
+    Title="sprint dribbles",
+    Flag="sprint-dribbles-toggle",
+    Default=false,
+    Callback=function()
+    end
+})
 
 ui.bind({
     Title="snatchback",
@@ -34,26 +92,20 @@ ui.bind({
     end
 })
 
-ui.toggle({
+ui.bind({
     Title="spin",
-    Flag="spin-macro",
-    Default=false,
-    Callback=function()
-
-    end
-}):Keybind({
     Flag="spin-macro-bind",
-    Key=Enum.UserInputType.None
+    Default=Enum.KeyCode.None,
+    Callback=function()
+        spin()
+    end
 })
 
-ui.toggle({
+ui.bind({
     Title="double btb",
-    Flag="double-btb-macro",
-    Default=false,
-    Callback=function()
-
-    end
-}):Keybind({
     Flag="double-btb-macro-bind",
-    Key=Enum.UserInputType.None
+    Default=Enum.KeyCode.None,
+    Callback=function()
+        doublebtb()
+    end
 })
