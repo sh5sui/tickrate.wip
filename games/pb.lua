@@ -177,28 +177,32 @@ inputserv.InputEnded:Connect(function(input)
 end)
 
 local function getBallHand()
-    for _, ball in ipairs(workspace.Basketballs:GetChildren()) do
-        local attrs = ball:FindFirstChild("Attributes")
-        local charValue = attrs and attrs:FindFirstChild("Character")
-        local character = charValue and charValue.Value
+    local myChar = getCharacter()
+    if not myChar then return "No ball" end
 
-        if character then
-            local right = character:FindFirstChild("RightHand")
-            local left = character:FindFirstChild("LeftHand")
-
-            if right and left then
-                local r = (ball.Position - right.Position).Magnitude
-                local l = (ball.Position - left.Position).Magnitude
-
-                return r < l and "Right" or "Left"
+    local ballsFolder = Workspace:FindFirstChild("Basketballs")
+    if ballsFolder then
+        for _, ball in ipairs(ballsFolder:GetChildren()) do
+            local attrs = ball:FindFirstChild("Attributes")
+            local charValue = attrs and attrs:FindFirstChild("Character")
+            if charValue and charValue.Value == myChar then
+                local right = myChar:FindFirstChild("RightHand")
+                local left = myChar:FindFirstChild("LeftHand")
+                if right and left then
+                    local r = (ball.Position - right.Position).Magnitude
+                    local l = (ball.Position - left.Position).Magnitude
+                    return r < l and "Right" or "Left"
+                end
             end
         end
     end
 
+    local handAttr = myChar:GetAttribute("Hand")
+    if handAttr == "L" then return "Left" end
+    if handAttr == "R" then return "Right" end
+
     return "No ball"
 end
-
-print(getBallHand())
 
 local function snatchback()
     if ui.Flags["sprint-dribbles-toggle"] then
@@ -227,14 +231,19 @@ end
 local function spin()
     local sprint = ui.Flags["sprint-dribbles-toggle"]
     local hand = getBallHand()
-    local delay = 0.01
+    local delay = 0.015
+
+    if hand == "No ball" then return end
+
+    keyrelease(0xA2)
+    task.wait(0.01)
+
+    if sprint then
+        keypress(0xA0)
+        task.wait(delay)
+    end
 
     if hand == "Left" then
-        if sprint then
-            keypress(0xA0)
-            task.wait(delay)
-        end
-
         keypress(0x5A)
         task.wait(delay)
         keyrelease(0x5A)
@@ -246,17 +255,7 @@ local function spin()
         keypress(0x43)
         task.wait(delay)
         keyrelease(0x43)
-
-        if sprint then
-            keyrelease(0xA0)
-        end
-
     elseif hand == "Right" then
-        if sprint then
-            keypress(0xA0)
-            task.wait(delay)
-        end
-
         keypress(0x43)
         task.wait(delay)
         keyrelease(0x43)
@@ -268,10 +267,10 @@ local function spin()
         keypress(0x5A)
         task.wait(delay)
         keyrelease(0x5A)
+    end
 
-        if sprint then
-            keyrelease(0xA0)
-        end
+    if sprint then
+        keyrelease(0xA0)
     end
 end
 
