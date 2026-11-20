@@ -16,8 +16,8 @@ local physics = ui.tab("physics", {"player", "macros"})
 local misc = ui.tab("misc", {"general"})
 
 local MONITORED_KEYS = {
-    [Enum.KeyCode.E] = true,
-    [Enum.KeyCode.Space] = true,
+    [Enum.KeyCode.E] = 0x45,
+    [Enum.KeyCode.Space] = 0x20,
 }
 
 local IGNORE_ANIMS = {
@@ -39,6 +39,8 @@ local ANIM_RELEASE_TIMES = {
 
 local UNDER_RIM_DIST    = 11.0
 local UNDER_RIM_RELEASE = 0.430
+local DEEP_DIST         = 42.0
+local DEEP_RELEASE      = 0.380
 local FADEAWAY_RELEASE  = 0.360
 local DEFAULT_FALLBACK  = 0.450
 local PING_OFFSET       = 0
@@ -77,6 +79,20 @@ local function getDistanceToNearestHoop(char)
     return shortestDist
 end
 
+local function forceReleaseKey(keyCode)
+    isTracking = false
+    activeKey = nil
+    isSyntheticRelease = true
+    vinputmgr:SendKeyEvent(false, keyCode, false, game)
+    local vk = MONITORED_KEYS[keyCode]
+    if vk and keyrelease then
+        keyrelease(vk)
+    end
+    task.defer(function()
+        isSyntheticRelease = false
+    end)
+end
+
 local function startAutoRelease(keyCode)
     if isTracking or not ui.Flags["auto-time-toggle"] then return end
 
@@ -95,58 +111,64 @@ local function startAutoRelease(keyCode)
 
     local startTime = os.clock()
     local shotTrack = nil
+    local lockedIsKnown = false
     local isFadeaway = false
     local distAtStart = getDistanceToNearestHoop(char)
     local targetTimePos = DEFAULT_FALLBACK
 
     task.spawn(function()
         while isTracking and activeKey == keyCode and ui.Flags["auto-time-toggle"] do
-            if (os.clock() - startTime) > 2.0 then
+            if (os.clock() - startTime) > 1.8 then
                 isTracking = false
                 activeKey = nil
                 return
             end
 
-            if not shotTrack then
+            if shotTrack and not shotTrack.IsPlaying then
+                shotTrack = nil
+                lockedIsKnown = false
+            end
+
+            if not shotTrack or not lockedIsKnown then
                 for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
-                    if not initialTracks[track] then
+                    if not initialTracks[track] and track.IsPlaying then
                         local animId = track.Animation and track.Animation.AnimationId or ""
 
                         if IGNORE_ANIMS[animId] then
-                            if not isFadeaway then
-                                isFadeaway = true
-                            end
+                            isFadeaway = true
                         else
-                            shotTrack = track
+                            local isKnown = JUMPSHOT_ANIMS[animId] or (ANIM_RELEASE_TIMES[animId] ~= nil)
+                            if isKnown or not shotTrack then
+                                shotTrack = track
+                                lockedIsKnown = isKnown
 
-                            if JUMPSHOT_ANIMS[animId] then
-                                if isFadeaway then
-                                    targetTimePos = FADEAWAY_RELEASE + PING_OFFSET
-                                elseif distAtStart <= UNDER_RIM_DIST then
-                                    targetTimePos = UNDER_RIM_RELEASE + PING_OFFSET
+                                if JUMPSHOT_ANIMS[animId] then
+                                    if isFadeaway then
+                                        targetTimePos = FADEAWAY_RELEASE + PING_OFFSET
+                                    elseif distAtStart <= UNDER_RIM_DIST then
+                                        targetTimePos = UNDER_RIM_RELEASE + PING_OFFSET
+                                    elseif distAtStart >= DEEP_DIST then
+                                        targetTimePos = DEEP_RELEASE + PING_OFFSET
+                                    else
+                                        targetTimePos = (ANIM_RELEASE_TIMES[animId] or 0.330) + PING_OFFSET
+                                    end
+                                elseif ANIM_RELEASE_TIMES[animId] then
+                                    targetTimePos = ANIM_RELEASE_TIMES[animId] + PING_OFFSET
                                 else
-                                    targetTimePos = (ANIM_RELEASE_TIMES[animId] or 0.330) + PING_OFFSET
+                                    targetTimePos = DEFAULT_FALLBACK + PING_OFFSET
                                 end
-                            elseif ANIM_RELEASE_TIMES[animId] then
-                                targetTimePos = ANIM_RELEASE_TIMES[animId] + PING_OFFSET
-                            else
-                                targetTimePos = DEFAULT_FALLBACK + PING_OFFSET
-                            end
 
-                            break
+                                if isKnown then
+                                    break
+                                end
+                            end
                         end
                     end
                 end
             end
 
             if shotTrack and shotTrack.TimePosition >= targetTimePos then
-                isTracking = false
-                activeKey = nil
-                isSyntheticRelease = true
-                vinputmgr:SendKeyEvent(false, keyCode, false, game)
-                task.defer(function()
-                    isSyntheticRelease = false
-                end)
+                forceReleaseKey(keyCode)
                 return
             end
 
