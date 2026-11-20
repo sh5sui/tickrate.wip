@@ -13,7 +13,7 @@ ui.ToggleKey = Enum.KeyCode.Insert
 local config = ui.tab("config", {"general"})
 local scoring = ui.tab("scoring", {"scoring"})
 local physics = ui.tab("physics", {"player", "macros"})
-local misc = ui.tab("misc", {"general"})
+local menu = ui.tab("menu", {"general"})
 
 local MONITORED_KEYS = {
     [Enum.KeyCode.E] = 0x45,
@@ -386,5 +386,88 @@ ui.bind({
     Default=Enum.KeyCode.None,
     Callback=function()
         doublebtb()
+    end
+})
+
+menu:Section("menu", "Left", "general")
+
+local menubind
+menubind = ui.label({
+    Title="menu toggle: " .. ui.ToggleKey.Name
+}):Keybind({
+    Title="menu toggle",
+    Flag="menu-toggle-bind",
+    Default=ui.ToggleKey,
+    Callback=function(menukey)
+        if menukey.EnumType == Enum.KeyCode then
+        task.defer(function()
+            ui.ToggleKey = menukey
+            menubind:Set("menu toggle: " .. ui.ToggleKey.Name)
+        end)
+    end
+end
+})
+
+ui.toggle({
+    Title="watermark",
+    Flag="watermark-toggle",
+    Default=true,
+    Callback=function(enabled)
+        if enabled then
+            ui.watermark("tickrate.wip | private")
+        else
+            ui.watermark(false)
+    end
+end
+})
+
+config:Section("config", "Left", "general")
+
+ui.textbox({
+    Title="config name",
+    Flag="config-textbox",
+    Default="default",
+    Placeholder="default",
+    Callback=function()
+    end
+})
+
+ui.dropdown({
+    Title="configs",
+    List={""},
+    Default="configs-dropdown",
+    Callback=function()
+    end
+})
+
+ui.button({
+    Title="save",
+    Flag="save-button",
+    Callback=function()
+        ui.notify("Normal", "saved config: " .. ui.Flags["config-textbox"], 3)
+    end
+})
+
+ui.button({
+    Title="override",
+    Flag="override-button",
+    Callback=function()
+        ui.notify("Normal", "config overridden: " .. ui.Flags["config-textbox"], 3)
+    end
+})
+
+ui.button({
+    Title="load",
+    Flag="load-button",
+    Callback=function()
+        ui.notify("Normal", "loaded config: " .. ui.Flags["config-textbox"], 3)
+    end
+})
+
+ui.button({
+    Title="set autoload",
+    Flag="autoload-button",
+    Callback=function()
+        ui.notify("Normal", "set " .. ui.Flags["config-textbox"] .. " as autoload", 3)
     end
 })
