@@ -9,6 +9,25 @@ local RunService = game:GetService("RunService")
 local HeadOff = Vector3.new(0, 0.5, 0)
 local LegOff = Vector3.new(0, 3, 0)
 
+local function findplayers()
+    for i,v in ipairs(Players:GetPlayers()) do 
+        if v ~= lplr then
+            local char = v.Character
+            local huamnoidrp = char and char:FindFirstChild("HumanoidRootPart")
+
+            if huamnoidrp then
+                local pos, vis = camera:WorldToViewportPoint(huamnoidrp.Position)
+
+                local vec = Vector2.new(pos.X, pos.Y)
+
+                    return vis, pos
+            end
+        end
+    end
+end
+
+local vis, pos = findplayers()
+
 function drawTracers(enabled)
 
     if not enabled then
@@ -65,6 +84,8 @@ function drawTracers(enabled)
                             trac.To = Vector2.new(vec.x, vec.y)
 
                             if v.TeamColor == lplr.TeamColor then
+                                trac.Visible = false
+                            elseif ui.Flags["visible-check-enemy"] and not onScreen then
                                 trac.Visible = false
                             else
                                 trac.Visible = true
@@ -323,6 +344,15 @@ local config = ui.tab("config", {"general"})
 local player = ui.tab("player", {"local", "team", "enemy"})
 local world = ui.tab("world", {"sky", "lighting"})
 local misc = ui.tab("misc", {"general"})
+local plist = ui.tab("player list", {"plist"})
+
+plist:Section("player list", "Left", "plist")
+
+for i,v in ipairs(Players:GetPlayers()) do
+    ui.label({
+        Title=v.User
+    })
+end
 
 player:Section("player esp", "Left", "local")
 
@@ -649,7 +679,7 @@ ui.toggle({
     Flag="visible-check-enemy",
     Default=false,
     Callback=function(v)
-        print("visible-check-enemy", v)
+        
     end
 })
 
@@ -659,6 +689,18 @@ ui.toggle({
     Default=false,
     Callback=function(v)
         print("ignore-bots-enemy", v)
+    end
+})
+
+ui.slider({
+    Title="max draw distance",
+    Flag="max-draw-distance",
+    Symbol=" studs",
+    Default=1,
+    Min=1,
+    Max=1000,
+    Decimals=0,
+    Callback=function()
     end
 })
 
