@@ -32,9 +32,9 @@ local JUMPSHOT_ANIMS = {
 local ANIM_RELEASE_TIMES = {
     ["rbxassetid://109811332443306"] = 0.330,
     ["rbxassetid://90734416867039"]  = 0.330,
-    ["rbxassetid://117785999630918"] = 0.450,
-    ["rbxassetid://12031953650"]     = 0.450,
-    ["rbxassetid://109084161206360"] = 0.500,
+    ["rbxassetid://117785999630918"] = 0.452,
+    ["rbxassetid://12031953650"]     = 0.452,
+    ["rbxassetid://109084161206360"] = 0.51,
 }
 
 local UNDER_RIM_DIST    = 11.0
